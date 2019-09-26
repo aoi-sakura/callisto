@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root xmlns="urn:schemas-upnp-org:device-1-0" xmlns:dlna="urn:schemas-dlna-org:device-1-0" xmlns:jlabs="urn:schemas-jlabs-or.jp:device-1-0">
+  <specVersion>
+    <major>1</major>
+    <minor>0</minor>
+  </specVersion>
+  <device>
+    <dlna:X_DLNADOC>DMS-1.50</dlna:X_DLNADOC>
+    <deviceType>urn:schemas-upnp-org:device:MediaServer:1</deviceType>
+    <jlabs:X_JLABSDOC>SERVER-1.0</jlabs:X_JLABSDOC>
+    <jlabs:X_JLABSCAP>resume-1.0</jlabs:X_JLABSCAP>
+    <friendlyName>Callisto</friendlyName>
+    <manufacturer>CableTVSTB</manufacturer>
+    <modelName>CableTVSTBRemoteControlApplication</modelName>
+    <modelNumber>000001</modelNumber>
+    <serialNumber>000001</serialNumber>
+    <UDN>uuid:ed53864f-b16f-49d5-8f45-2d95e2a00df6</UDN>
+    <serviceList>
+      <service>
+        <serviceType>urn:schemas-upnp-org:service:ContentDirectory:1</serviceType>
+        <serviceId>urn:schemas-upnp-org:service:ContentDirectory</serviceId>
+        <SCPDURL>_urn:schemas-upnp-org:service:ContentDirectory_scpd.xml</SCPDURL>
+        <controlURL>_urn:schemas-upnp-org:service:ContentDirectory_control</controlURL>
+      </service>
+    </serviceList>
+  </device>
+</root>
