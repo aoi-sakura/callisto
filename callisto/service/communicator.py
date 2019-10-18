@@ -29,6 +29,10 @@ class CommunicationData:
         self.args = args
 
 
+class Channel(Enum):
+    DISCOVERY = 1
+
+
 class CommunicatorService:
     def __init__(self, dlna_service, host, ua, target_server_name):
         self.__queue = Queue(maxsize=10)
@@ -80,25 +84,35 @@ class CommunicatorService:
                     server_address = item.args
                     self.jlabs_client = server_address
                 elif item.action == Action.JLABS_DATA_FROM_STB:
-                    await self.__handle_jlabs(item.args)
+                    self.__handle_jlabs(item.args)
 
                 elif item.action == Action.STB_TOGGLE_POWER:
                     # 電源ボタンが押されるのと同じアクション
-                    await self.__request_jlsbs_send_key("VK_POWER")
+                    self.__request_jlsbs_send_key("VK_POWER")
+                elif item.action == Action.STB_CHANNEL_DISCOVERY:
+                    # Disovery チャンネルを指定した時のアクション
+                    self.__request_jlabs_channel(Channel.DISCOVERY)
 
             finally:
                 self.__queue.task_done()
 
-    async def __send_jlabs_client(self, data):
+    def __send_jlabs_client(self, data):
         # MEMO: '\x04' が無いと終端した判定してくれない
-        await self.jlabs_client.write(json.dumps(data).encode('utf-8') + b'\x04')
+        self.jlabs_client.write(json.dumps(data).encode('utf-8') + b'\x04')
 
-    async def __request_jlsbs_send_key(self, key_id):
+    def __request_jlsbs_send_key(self, key_id):
         rc_key_request_json = {"param": {"type": "keypress", "keyCode": key_id},
                                "sequenceID": "rcKey", "request": "rcKey"}
-        await self.__send_jlabs_client(rc_key_request_json)
+        self.__send_jlabs_client(rc_key_request_json)
 
-    async def __handle_jlabs(self, args):
+    def __request_jlabs_channel(self, channel):
+        if channel == Channel.DISCOVERY:
+            self.__request_jlsbs_send_key("VK_6")
+            self.__request_jlsbs_send_key("VK_5")
+            self.__request_jlsbs_send_key("VK_2")
+            self.__request_jlsbs_send_key("VK_ENTER")
+
+    def __handle_jlabs(self, args):
         if args.get('request') is not None:
             if args.get('request') == 'startWiFiPairing':
                 # 1. startWifiPairing の request を受け取ったら、受け取ったことを示す response を返す
@@ -109,7 +123,7 @@ class CommunicatorService:
                      "result": 1,
                      "errorCode": "",
                      "data": {"permission": True}}
-                await self.__send_jlabs_client(start_wifi_pairing_response)
+                self.__send_jlabs_client(start_wifi_pairing_response)
                 logger.info("Remote Controller service is now available.")
 
                 # ここ以降の処理は、試しで実装しているけどリモコン使うだけなら要らない
@@ -119,7 +133,7 @@ class CommunicatorService:
                 get_mw_version_request = \
                     {"param": {}, "sequenceID": "getMWVersion", "request": "getMWVersion"}
                 # MEMO: '\x04' が無いと終端した判定してくれない
-                await self.__send_jlabs_client(get_mw_version_request)
+                self.__send_jlabs_client(get_mw_version_request)
         elif args.get('response') is not None:
             if args.get('response') == 'getMWVersion':
                 # getMWVersion のレスポンスは特にどうでもいい
@@ -138,7 +152,7 @@ class CommunicatorService:
                 get_channels_request = {"param": {"networkType": 0},
                                         "sequenceID": "getChannels",
                                         "request": "getChannels"}
-                await self.__send_jlabs_client(get_channels_request)
+                self.__send_jlabs_client(get_channels_request)
 
             elif args.get('response') == 'getChannels':
                 # 最初は 地上波 のリストを取得
@@ -149,10 +163,10 @@ class CommunicatorService:
                                         "request": "getChannels"}
                 if args.get('data').get('items')[0].get('networkType') == 0:
                     get_channels_request['param']['networkType'] = 1
-                    await self.__send_jlabs_client(get_channels_request)
+                    self.__send_jlabs_client(get_channels_request)
                 elif args.get('data').get('items')[0].get('networkType') == 1:
                     get_channels_request['param']['networkType'] = 2
-                    await self.__send_jlabs_client(get_channels_request)
+                    self.__send_jlabs_client(get_channels_request)
                 elif args.get('data').get('items')[0].get('networkType') == 2:
                     # getChannel は終わったので次へ
                     # ToDo: 途中で面倒になったのでいったんここまで

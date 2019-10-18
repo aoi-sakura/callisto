@@ -32,5 +32,11 @@ class InterfaceHandler(tornado.web.RequestHandler):
             logger.debug('request power on/off')
             data = CommunicationData(action=Action.STB_TOGGLE_POWER)
             self.service.add(data)
+        elif action == 'channel':
+            channel = self.get_argument('channel')
+            if channel == 'discovery':
+                logger.debug('request channel discovery')
+                data = CommunicationData(action=Action.STB_CHANNEL_DISCOVERY)
+                self.service.add(data)
 
         self.redirect(self.request.uri, status=303)
